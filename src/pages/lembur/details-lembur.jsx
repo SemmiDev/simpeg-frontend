@@ -1,4 +1,11 @@
-import { Spinner, TextInput, Button, Tabs } from 'flowbite-react';
+import {
+    Spinner,
+    TextInput,
+    Button,
+    Tabs,
+    Timeline,
+    Label,
+} from 'flowbite-react';
 import { useState, useEffect } from 'react';
 import InputDetails from '../../components/input';
 import {
@@ -18,7 +25,12 @@ const DetailsLembur = () => {
     const id = queryParam.get('id');
     const [date, setDate] = useState(queryParam.get('date'));
 
-    const [detailsLembur, setDetailsLembur] = useState(null);
+    const [tanggalLembur, setTanggalLembur] = useState([]);
+
+    const [currentDate, setCurrentDate] = useState(null);
+    const [currenJam, setCurrentJam] = useState(null);
+
+    const [detailsLembur, setDetailsLembur] = useState({});
     const [isLoading, setIsLoading] = useState(true);
 
     const getDetailsDataRekapLembur = async () => {
@@ -39,6 +51,20 @@ const DetailsLembur = () => {
         setIsLoading(false);
     };
 
+    const saveTanggalLembur = async () => {
+        await fetch(`http://localhost:8080/api/tanggal_lembur?id=${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(tanggalLembur),
+        })
+            .then((res) => res.json())
+            .then(() => {
+                window.location.reload();
+            });
+    };
+
     useEffect(() => {
         getDetailsDataRekapLembur();
     }, []);
@@ -55,10 +81,10 @@ const DetailsLembur = () => {
                 </div>
             ) : (
                 <>
-                    <div className='bg-white border-[#5f9ea0] border space-y-5 w-[700px] rounded-t-xl rounded-b-xl overflow-hidden pb-3 shadow-lg'>
+                    <div className='bg-white border-[#5f9ea0] overflow-hidden border space-y-5 w-[700px] rounded-t-xl h-[600px] rounded-b-xl pb-3 shadow-lg'>
                         <Tabs.Group
                             aria-label='Tabs with icons'
-                            style='underline'
+                            style='default'
                         >
                             <Tabs.Item
                                 active
@@ -164,18 +190,139 @@ const DetailsLembur = () => {
                                 </div>
                             </Tabs.Item>
                             <Tabs.Item title='Detail Rekap Jam Lembur'>
-                                <div className='flex gap-x-5 gap-y-2 flex-wrap items-center  m-5 p-5 rounded-lg'>
-                                    {detailsLembur.list_tanggal_lembur.map(
-                                        (data, index) => {
-                                            return (
-                                                <LemburBadge
-                                                    key={index}
-                                                    title={data.tanggal + ' ➤ '}
-                                                    totalJam={data.total_jam}
+                                <div className='mx-auto flex gap-x-5 gap-y-2 flex-wrap items-center  m-5 p-5 rounded-lg'>
+                                    {detailsLembur.list_tanggal_lembur &&
+                                        detailsLembur.list_tanggal_lembur.map(
+                                            (data, index) => {
+                                                return (
+                                                    <LemburBadge
+                                                        key={index}
+                                                        title={
+                                                            data.tanggal + ' ➤ '
+                                                        }
+                                                        totalJam={
+                                                            data.total_jam
+                                                        }
+                                                    />
+                                                );
+                                            }
+                                        )}
+                                </div>
+                            </Tabs.Item>
+
+                            <Tabs.Item title='Tambah Jam Lembur'>
+                                <div className='flex flex-col gap-2'>
+                                    <div className='flex flex-col gap-4 border border-gray-500/30 p-5 rounded-lg'>
+                                        <div>
+                                            <div className='mb-2 block'>
+                                                <Label
+                                                    htmlFor='tanggalLembur'
+                                                    value='Pilih Tanggal Lembur'
                                                 />
-                                            );
-                                        }
-                                    )}
+                                            </div>
+                                            <TextInput
+                                                onChange={(e) =>
+                                                    setCurrentDate(
+                                                        e.target.value
+                                                    )
+                                                }
+                                                value={currentDate}
+                                                id='tanggalLembur'
+                                                type='date'
+                                                required={true}
+                                            />
+                                        </div>
+                                        <div>
+                                            <div className='mb-2 block'>
+                                                <Label
+                                                    htmlFor='totalJam'
+                                                    value='Masukkan Total Jam'
+                                                />
+                                            </div>
+                                            <TextInput
+                                                value={currenJam}
+                                                onChange={(e) =>
+                                                    setCurrentJam(
+                                                        e.target.value
+                                                    )
+                                                }
+                                                id='totalJam'
+                                                type='number'
+                                                placeholder='Total Jam'
+                                                required={true}
+                                            />
+                                        </div>
+                                        <div className='flex items-center gap-3 justify-end'>
+                                            <Button
+                                                onClick={() => {
+                                                    // add one object to array tanggalLembur
+                                                    setTanggalLembur([
+                                                        ...tanggalLembur,
+                                                        {
+                                                            tanggal:
+                                                                currentDate,
+                                                            total_jam:
+                                                                parseFloat(
+                                                                    currenJam
+                                                                ),
+                                                        },
+                                                    ]);
+                                                }}
+                                                color={'purple'}
+                                            >
+                                                Tambah
+                                            </Button>
+                                            <Button
+                                                onClick={() => {
+                                                    if (
+                                                        tanggalLembur.length ===
+                                                        0
+                                                    ) {
+                                                        alert(
+                                                            'Data Lembur Tidak Boleh Kosong'
+                                                        );
+                                                    } else {
+                                                        saveTanggalLembur();
+                                                    }
+                                                }}
+                                            >
+                                                Simpan
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <div className='flex flex-wrap overflow-auto gap-4 border border-gray-500/30 p-5 rounded-lg'>
+                                        {tanggalLembur.map((tanggal, index) => (
+                                            <div
+                                                key={index}
+                                                className='flex justify-center items-center gap-2'
+                                            >
+                                                <span className='text-xs'>
+                                                    {tanggal.tanggal}
+                                                </span>
+                                                <span className='text-xs font-semibold'>
+                                                    {tanggal.total_jam} Jam
+                                                </span>
+                                                <Button
+                                                    size={'xs'}
+                                                    color={'failure'}
+                                                    onClick={() => {
+                                                        setTanggalLembur(
+                                                            tanggalLembur.filter(
+                                                                (item) =>
+                                                                    item !==
+                                                                    tanggal
+                                                            )
+                                                        );
+                                                    }}
+                                                    type='button'
+                                                    variant='danger'
+                                                >
+                                                    Hapus
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </Tabs.Item>
                         </Tabs.Group>
